@@ -1,0 +1,6 @@
+# Windows 兼容:所有会被 git 执行的脚本强制 LF,防止 CRLF 弄坏 sh
+*.sh          text eol=lf
+commit-msg    text eol=lf
+pre-commit    text eol=lf
+pre-push      text eol=lf
+.githooks.conf text eol=lf

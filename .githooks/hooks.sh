@@ -4,6 +4,10 @@
 # 用法:sh .githooks/hooks.sh <hook> [参数]
 set -u
 
+if [ $# -lt 1 ]; then
+  echo "用法: sh hooks.sh <hook> [参数]  (hook: pre-commit|commit-msg|pre-push)" >&2
+  exit 2
+fi
 hook=$1
 shift
 
@@ -24,7 +28,12 @@ repo_root=$(git rev-parse --show-toplevel 2>/dev/null || true)
 [ -n "$repo_root" ] || fail "不在 git 仓库中"
 cd "$repo_root" || exit 1
 
-[ -f .githooks.conf ] && . ./.githooks.conf
+if [ -f .githooks.conf ]; then
+  # Windows 编辑器可能把配置存成 CRLF,先剥离 \r 再加载,防 shell 报错
+  tr -d '\r' < .githooks.conf > ./.githooks.conf.$$
+  . ./.githooks.conf.$$
+  rm -f ./.githooks.conf.$$
+fi
 
 # SKIP 支持:兼容 pre-commit 风格的逗号分隔,也支持空格
 if echo "$skip ${SKIP:-}" | tr ', ' ' ' | grep -qw "$hook"; then
@@ -63,13 +72,12 @@ pre-commit)
   errs=$(git diff --cached --check || true)
   errs=$(printf '%s\n' "$errs" | grep -v ': new blank line at EOF\.$' || true)
   [ -z "$errs" ] || fail "暂存区存在行尾空白错误"
-  if printf '%s\n' "$files" | grep -Ev '(^|/)\.env\.example$' | grep -Eq "$forbidden_pattern"; then
-    bad=$(printf '%s\n' "$files" | grep -Ev '(^|/)\.env\.example$' | grep -E "$forbidden_pattern" | head -n1)
-    fail "禁止提交系统/环境文件: $bad"
-  fi
+  bad=$(printf '%s\n' "$files" | grep -Ev '(^|/)\.env\.example$' | grep -E "$forbidden_pattern" | head -n1 || true)
+  [ -z "$bad" ] || fail "禁止提交系统/环境文件: $bad"
+  # 内层已打印具体文件名,外层只传播退出码,避免重复报错
   printf '%s\n' "$files" | grep '\.md$' | while read -r f; do
     [ -s "$f" ] || { echo "hookkit [pre-commit]: Markdown 不能为空: $f" >&2; exit 1; }
-  done || fail "存在空的 Markdown 文件"
+  done || exit 1
   for c in $extra_checks; do
     "$c" --staged || fail "额外检查未通过: $c"
   done

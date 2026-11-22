@@ -14,7 +14,7 @@ shift
 # ---------- 默认配置(被 .githooks.conf 覆盖) ----------
 commit_types='feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert'
 require_scope=0                 # 1 表示 scope 必填
-require_lang=any                # any|zh|en ; zh=描述必须含中文且限制标点
+require_lang=zh                 # any|zh|en ; 默认 zh=描述必须含中文且限制标点
 branch_protected='main master develop'   # 合法首层分支
 branch_prefixes='feature fix chore release hotfix test'   # 合法前缀
 no_push='main master'           # 禁止直接推送的分支
@@ -51,7 +51,8 @@ commit-msg)
     Merge\ *) exit 0 ;;
   esac
   [ -n "$subject" ] || fail "提交信息不能为空"
-  if [ "$require_scope" = 1 ]; then scope='\([A-Za-z0-9._/-]+\)'; else scope='\([A-Za-z0-9._/-]+\)?'; fi
+  # ERE:外层 ()? 是可选的完整分支,内层 \(\) 匹配字面括号(scope 为 0 时整段可省)
+  if [ "$require_scope" = 1 ]; then scope='(\([A-Za-z0-9._/-]+\))'; else scope='(\([A-Za-z0-9._/-]+\))?'; fi
   desc='.+'
   [ "$require_lang" = zh ] && desc='.*[一-鿿].*'
   pattern="^($commit_types)$scope(!)?: $desc\$"

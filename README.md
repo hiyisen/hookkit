@@ -15,20 +15,19 @@ cd /path/to/你的仓库 && sh install.sh
 
 | Hook | 检查 |
 |---|---|
-| commit-msg | `<类型>(<范围>): <描述>`,类型表可配;merge 放行 |
+| commit-msg | `<类型>(<范围>): <描述>`,描述默认须含中文(`require_lang=zh`),类型表可配;merge 放行 |
 | pre-commit | 行尾空白;`.DS_Store`/`Thumbs.db`/`.env*`(放行 `.env.example`);空 Markdown;可挂项目特有检查 |
 | pre-push | 分支命名 `main|master|develop` 或 `<前缀>/<名称>`;禁止 `main`/`master` 直推 |
 
 ## 配置
 
-仓库根 `.githooks.conf`(可选,不写用默认值),例如 8D 风格:
+仓库根 `.githooks.conf`(可选,不写用默认值)。默认 `require_lang=zh`(描述必须含中文)、`require_scope=0`(范围可省);8D 风格改为 scope 必填:
 
 ```sh
-require_lang=zh        # 描述必须含中文
 require_scope=1        # scope 必填
 ```
 
-可配项见 `.githooks/hooks.sh` 顶部:类型表、分支前缀、禁提文件、额外检查 `extra_checks` 等。
+想放开中文约束就在配置里写 `require_lang=any`。可配项见 `.githooks/hooks.sh` 顶部:类型表、分支前缀、禁提文件、额外检查 `extra_checks` 等。
 临时跳过:`SKIP=pre-commit`(兼容 pre-commit 框架的逗号分隔)。
 
 ## Windows
